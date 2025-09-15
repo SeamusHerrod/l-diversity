@@ -1,17 +1,16 @@
 CXX = g++
-CXXFLAGS = -Wall -O2
+CXXFLAGS = -Wall -g
 
-TARGET = ldiv
-OBJS = main.o
-SRC = main.cpp
+all: ldiv
 
-all: $(TARGET)
+ldiv: main.o l-div.o
+	$(CXX) $(CXXFLAGS) -o ldiv main.o l-div.o
 
-$(TARGET): $(OBJS)
-	$(CXX) $(CXXFLAGS) $(OBJS) -o $(TARGET)
+main.o: main.cpp l-div.h
+	$(CXX) $(CXXFLAGS) -c main.cpp
 
-main.o: main.cpp
-	$(CXX) $(CXXFLAGS) -c main.cpp -o main.o
+l-div.o: l-div.cpp l-div.h
+	$(CXX) $(CXXFLAGS) -c l-div.cpp
 
 clean:
-	rm -f $(TARGET) *.o
+	rm -f *.o ldiv
