@@ -52,14 +52,16 @@ enum races {
 std::string to_string(education e);
 std::string to_string(marital_status m);
 std::string to_string(races r);
+int assign_rand_k();
 
 class Record {
     public:
         float age;
+        int k;
         education edu;
         marital_status marriage;
         races race;
-        Record(float a, education e, marital_status m, races r);
+        Record(float a, int k_anon, education e, marital_status m, races r);
 };
 
 class Dataset {

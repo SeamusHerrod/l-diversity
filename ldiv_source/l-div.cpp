@@ -4,14 +4,16 @@
 #include <sstream>
 #include <algorithm>
 #include <cctype>
+#include <cstdlib>
 
 int from_l_div() {
     std::cout << "Function from_l_div called." << std::endl;
     return 0; // Placeholder return value
 }
 
-Record::Record(float a, education e, marital_status m, races r) {
+Record::Record(float a, int k_anon, education e, marital_status m, races r) {
     age = a;
+    k = k_anon;
     edu = e;
     marriage = m;
     race = r;
@@ -76,6 +78,13 @@ static races parseRace(const std::string &raw) {
     return null_r;
 }
 
+// generate a random value of 4, 5, or 7
+int assign_rand_k() {
+    int k_vals[] = {4, 5, 7};
+    int idx = rand() % 3;
+    return k_vals[idx];
+}
+
 Dataset::Dataset() {
     std::ifstream infile(FILEPATH);
     if (!infile.is_open()) infile.open("data/adult.data");
@@ -95,12 +104,13 @@ Dataset::Dataset() {
         if (fields.size() < 9) continue;
 
         float age = 0.0f;
+        int k = assign_rand_k();
         try { age = std::stof(fields[0]); } catch(...) { age = 0.0f; }
         education edu = parseEducation(fields[3]);
         marital_status ms = parseMarital(fields[5]);
         races r = parseRace(fields[8]);
 
-        records.emplace_back(age, edu, ms, r);
+        records.emplace_back(age, k, edu, ms, r);
     }
 }
 
