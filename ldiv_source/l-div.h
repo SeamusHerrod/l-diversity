@@ -6,7 +6,7 @@
 #include <vector>
 #include <string>
 int from_l_div();
-
+static std::string FILEPATH = "../data/adult.data";
 using namespace std;
 
 // Enumerations used by Record
@@ -47,6 +47,11 @@ enum races {
     black, 
     null_r
 };
+
+// helpers
+std::string to_string(education e);
+std::string to_string(marital_status m);
+std::string to_string(races r);
 
 class Record {
     public:

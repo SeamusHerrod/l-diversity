@@ -77,7 +77,7 @@ static races parseRace(const std::string &raw) {
 }
 
 Dataset::Dataset() {
-    std::ifstream infile("../data/adult.data");
+    std::ifstream infile(FILEPATH);
     if (!infile.is_open()) infile.open("data/adult.data");
     if (!infile.is_open()) {
         // no data file found: leave empty vector
@@ -101,5 +101,54 @@ Dataset::Dataset() {
         races r = parseRace(fields[8]);
 
         records.emplace_back(age, edu, ms, r);
+    }
+}
+
+std::string to_string(education e) {
+    switch (e) {
+        case bachelors: return "Bachelors";
+        case some_college: return "Some-college";
+        case eleventh: return "11th";
+        case hs_grad: return "HS-grad";
+        case prof_school: return "Prof-school";
+        case assoc_acdm: return "Assoc-acdm";
+        case assoc_voc: return "Assoc-voc";
+        case ninth: return "9th";
+        case seventh_eighth: return "7th-8th";
+        case twelveth: return "12th";
+        case masters: return "Masters";
+        case first_fourth: return "1st-4th";
+        case tenth: return "10th";
+        case doctorate: return "Doctorate";
+        case fifth_sixth: return "5th-6th";
+        case preschool: return "Preschool";
+        case null_edu: return "Unknown";
+        default: return "Unknown";
+    }
+}
+
+std::string to_string(marital_status m) {
+    switch (m) {
+        case married_civ_spouse: return "Married-civ-spouse";
+        case divorced: return "Divorced";
+        case never_married: return "Never-married";
+        case separated: return "Separated";
+        case widowed: return "Widowed";
+        case married_spouse_absent: return "Married-spouse-absent";
+        case married_af_spouse: return "Married-AF-spouse";
+        case null_marital: return "Unknown";
+        default: return "Unknown";
+    }
+}
+
+std::string to_string(races r) {
+    switch (r) {
+        case white: return "White";
+        case asian_pac_islander: return "Asian-Pac-Islander";
+        case amer_indian_eskimo: return "Amer-Indian-Eskimo";
+        case other: return "Other";
+        case black: return "Black";
+        case null_r: return "Unknown";
+        default: return "Unknown";
     }
 }
