@@ -4,6 +4,8 @@
 #include <sstream>
 #include <algorithm>
 #include <cctype>
+#include <map>
+#include <cmath>
 #include <cstdlib>
 
 int from_l_div() {
@@ -86,6 +88,7 @@ int assign_rand_k() {
 }
 
 Dataset::Dataset() {
+    std::vector<int> k_counts = {0,0,0}; // to track counts of 4, 5, 7
     std::ifstream infile(FILEPATH);
     if (!infile.is_open()) infile.open("data/adult.data");
     if (!infile.is_open()) {
@@ -105,6 +108,13 @@ Dataset::Dataset() {
 
         float age = 0.0f;
         int k = assign_rand_k();
+        if (k == 4) {
+            k_counts[0]++;
+        } else if (k == 5) {
+            k_counts[1]++;
+        } else if (k == 7) {
+            k_counts[2]++;
+        }
         try { age = std::stof(fields[0]); } catch(...) { age = 0.0f; }
         education edu = parseEducation(fields[3]);
         marital_status ms = parseMarital(fields[5]);
@@ -112,6 +122,7 @@ Dataset::Dataset() {
 
         records.emplace_back(age, k, edu, ms, r);
     }
+    std::cout << "k counts: 4 -> " << k_counts[0] << ", 5 -> " << k_counts[1] << ", 7 -> " << k_counts[2] << std::endl;
 }
 
 std::string to_string(education e) {
@@ -161,4 +172,68 @@ std::string to_string(races r) {
         case null_r: return "Unknown";
         default: return "Unknown";
     }
+}
+
+// --- Generalization hierarchies (programmatic maps) ---
+std::map<education, std::vector<std::string>> EDU_HIER = {
+    {bachelors, {"Bachelors", "Undergraduate", "Tertiary", "*"}},
+    {some_college, {"Some-college", "Undergraduate", "Tertiary", "*"}},
+    {eleventh, {"11th", "Secondary", "Primary/Secondary", "*"}},
+    {hs_grad, {"HS-grad", "Secondary", "Primary/Secondary", "*"}},
+    {prof_school, {"Prof-school", "Graduate", "Tertiary", "*"}},
+    {assoc_acdm, {"Assoc-acdm", "Undergraduate", "Tertiary", "*"}},
+    {assoc_voc, {"Assoc-voc", "Undergraduate", "Tertiary", "*"}},
+    {ninth, {"9th", "Primary/Secondary", "Primary/Secondary", "*"}},
+    {seventh_eighth, {"7th-8th", "Primary/Secondary", "Primary/Secondary", "*"}},
+    {twelveth, {"12th", "Secondary", "Primary/Secondary", "*"}},
+    {masters, {"Masters", "Graduate", "Tertiary", "*"}},
+    {first_fourth, {"1st-4th", "Primary", "Primary/Secondary", "*"}},
+    {tenth, {"10th", "Primary/Secondary", "Primary/Secondary", "*"}},
+    {doctorate, {"Doctorate", "Graduate", "Tertiary", "*"}},
+    {fifth_sixth, {"5th-6th", "Primary", "Primary/Secondary", "*"}},
+    {preschool, {"Preschool", "Primary", "Primary/Secondary", "*"}},
+    {null_edu, {"Unknown", "Unknown", "Unknown", "*"}}
+};
+
+std::map<marital_status, std::vector<std::string>> MARITAL_HIER = {
+    {married_civ_spouse, {"Married-civ-spouse", "Married", "Married/Not", "*"}},
+    {divorced, {"Divorced", "Not-married", "Married/Not", "*"}},
+    {never_married, {"Never-married", "Not-married", "Married/Not", "*"}},
+    {separated, {"Separated", "Not-married", "Married/Not", "*"}},
+    {widowed, {"Widowed", "Not-married", "Married/Not", "*"}},
+    {married_spouse_absent, {"Married-spouse-absent", "Married", "Married/Not", "*"}},
+    {married_af_spouse, {"Married-AF-spouse", "Married", "Married/Not", "*"}},
+    {null_marital, {"Unknown", "Unknown", "Unknown", "*"}}
+};
+
+std::map<races, std::vector<std::string>> RACE_HIER = {
+    {white, {"White", "White/Non-White", "Broad", "*"}},
+    {asian_pac_islander, {"Asian-Pac-Islander", "Non-White", "Broad", "*"}},
+    {amer_indian_eskimo, {"Amer-Indian-Eskimo", "Non-White", "Broad", "*"}},
+    {other, {"Other", "Non-White", "Broad", "*"}},
+    {black, {"Black", "Non-White", "Broad", "*"}},
+    {null_r, {"Unknown", "Unknown", "Unknown", "*"}}
+};
+
+std::string generalize_age(float age, int level) {
+    if (level <= 0) return std::to_string(static_cast<int>(std::round(age)));
+    if (level == 1) {
+        int a = static_cast<int>(age);
+        int lo = (a / 5) * 5;
+        int hi = lo + 4;
+        return std::to_string(lo) + "-" + std::to_string(hi);
+    }
+    if (level == 2) {
+        int a = static_cast<int>(age);
+        int lo = (a / 10) * 10;
+        int hi = lo + 9;
+        return std::to_string(lo) + "-" + std::to_string(hi);
+    }
+    if (level == 3) {
+        if (age <= 24) return "Young";
+        if (age <= 54) return "Adult";
+        if (age <= 74) return "Senior";
+        return "Elder";
+    }
+    return "*"; // highest level
 }

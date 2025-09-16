@@ -5,6 +5,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <map>
 int from_l_div();
 static std::string FILEPATH = "../data/adult.data";
 using namespace std;
@@ -52,6 +53,13 @@ enum races {
 std::string to_string(education e);
 std::string to_string(marital_status m);
 std::string to_string(races r);
+// generalization maps: map from enum to vector of string levels (level 0..N)
+extern std::map<education, std::vector<std::string>> EDU_HIER;
+extern std::map<marital_status, std::vector<std::string>> MARITAL_HIER;
+extern std::map<races, std::vector<std::string>> RACE_HIER;
+
+// age generalizer: returns string for given level (0=exact, higher=more general)
+std::string generalize_age(float age, int level);
 int assign_rand_k();
 
 class Record {
