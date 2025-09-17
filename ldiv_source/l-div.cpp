@@ -13,7 +13,7 @@ int from_l_div() {
     return 0; // Placeholder return value
 }
 
-Record::Record(float a, int k_anon, education e, marital_status m, races r) {
+Record::Record(int a, int k_anon, education e, marital_status m, races r) {
     age = a;
     k = k_anon;
     edu = e;
@@ -196,13 +196,13 @@ std::map<education, std::vector<std::string>> EDU_HIER = {
 };
 
 std::map<marital_status, std::vector<std::string>> MARITAL_HIER = {
-    {married_civ_spouse, {"Married-civ-spouse", "Married", "Married/Not", "*"}},
-    {divorced, {"Divorced", "Not-married", "Married/Not", "*"}},
-    {never_married, {"Never-married", "Not-married", "Married/Not", "*"}},
-    {separated, {"Separated", "Not-married", "Married/Not", "*"}},
-    {widowed, {"Widowed", "Not-married", "Married/Not", "*"}},
-    {married_spouse_absent, {"Married-spouse-absent", "Married", "Married/Not", "*"}},
-    {married_af_spouse, {"Married-AF-spouse", "Married", "Married/Not", "*"}},
+    {married_civ_spouse, {"Married-civ-spouse", "Married", "*"}},
+    {divorced, {"Divorced", "Not-married", "*"}},
+    {never_married, {"Never-married", "Not-married", "*"}},
+    {separated, {"Separated", "Not-married", "*"}},
+    {widowed, {"Widowed", "Not-married", "*"}},
+    {married_spouse_absent, {"Married-spouse-absent", "Married", "*"}},
+    {married_af_spouse, {"Married-AF-spouse", "Married", "*"}},
     {null_marital, {"Unknown", "Unknown", "Unknown", "*"}}
 };
 
@@ -215,17 +215,15 @@ std::map<races, std::vector<std::string>> RACE_HIER = {
     {null_r, {"Unknown", "Unknown", "Unknown", "*"}}
 };
 
-std::string generalize_age(float age, int level) {
-    if (level <= 0) return std::to_string(static_cast<int>(std::round(age)));
+std::string generalize_age(int age, int level) {
+    if (level <= 0) return std::to_string(age);
     if (level == 1) {
-        int a = static_cast<int>(age);
-        int lo = (a / 5) * 5;
+        int lo = (age / 5) * 5;
         int hi = lo + 4;
         return std::to_string(lo) + "-" + std::to_string(hi);
     }
     if (level == 2) {
-        int a = static_cast<int>(age);
-        int lo = (a / 10) * 10;
+        int lo = (age / 10) * 10;
         int hi = lo + 9;
         return std::to_string(lo) + "-" + std::to_string(hi);
     }

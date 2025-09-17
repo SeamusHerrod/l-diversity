@@ -12,7 +12,8 @@ int main() {
         << " Marital Status: " << to_string(dataset.records[i].marriage)
         << " Race: " << to_string(dataset.records[i].race) << std::endl;
     }
-    
+    std::cout << generalize_age(4, 1) << std::endl; // example call
     */
+
     return 0;
 }

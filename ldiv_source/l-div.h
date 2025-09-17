@@ -59,17 +59,17 @@ extern std::map<marital_status, std::vector<std::string>> MARITAL_HIER;
 extern std::map<races, std::vector<std::string>> RACE_HIER;
 
 // age generalizer: returns string for given level (0=exact, higher=more general)
-std::string generalize_age(float age, int level);
+std::string generalize_age(int age, int level);
 int assign_rand_k();
 
 class Record {
     public:
-        float age;
+        int age;
         int k;
         education edu;
         marital_status marriage;
         races race;
-        Record(float a, int k_anon, education e, marital_status m, races r);
+        Record(int a, int k_anon, education e, marital_status m, races r);
 };
 
 class Dataset {
