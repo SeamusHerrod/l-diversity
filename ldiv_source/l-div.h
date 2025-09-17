@@ -77,5 +77,17 @@ class Dataset {
         std::vector<Record> records;
         Dataset();
 };
+
+// Personalized k-anonymity: groups records by current generalization levels
+// and iteratively generalizes attributes until every equivalence class
+// has size >= max k required among its members.
+// Returns final levels as tuple: (ageL, eduL, marL, raceL)
+std::tuple<int,int,int,int> personalized_anonymize(Dataset &ds, int maxLevel = 3);
+
+// helper get_qi is implemented in the cpp
+
+// Note: templated helper `get_level` is defined in the implementation file.
+// Templates must be visible at instantiation; to keep changes minimal we
+// declare only the typed generalization helper calls via the maps above.
 #endif // L_DIV_H
 

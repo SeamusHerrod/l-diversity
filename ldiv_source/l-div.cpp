@@ -7,10 +7,93 @@
 #include <map>
 #include <cmath>
 #include <cstdlib>
+#include <set>
+#include <tuple>
 
 int from_l_div() {
     std::cout << "Function from_l_div called." << std::endl;
-    return 0; // Placeholder return value
+    return 0;
+}
+// safe getter used earlier in discussion
+template<typename Enum, typename MapT>
+static std::string get_level(const MapT &map, Enum key, int level) {
+    auto it = map.find(key);
+    if (it == map.end()) return "*";
+    const auto &vec = it->second;
+    if (vec.empty()) return "*";
+    if (level < 0) level = 0;
+    if (level >= static_cast<int>(vec.size())) return vec.back();
+    return vec[level];
+}
+
+static std::tuple<std::string, std::string, std::string, std::string>
+get_qi(const Record &r, int ageL, int eduL, int marL, int raceL) {
+    return std::make_tuple(
+        generalize_age(r.age, ageL),
+        get_level(EDU_HIER, r.edu, eduL),
+        get_level(MARITAL_HIER, r.marriage, marL),
+        get_level(RACE_HIER, r.race, raceL)
+    );
+}
+
+
+std::tuple<int,int,int,int> personalized_anonymize(Dataset &ds, int maxLevel) {
+    if (ds.records.empty()) return std::make_tuple(0,0,0,0);
+
+    // starting levels
+    int ageL = 0, eduL = 0, marL = 0, raceL = 0;
+
+    bool changed = true;
+    while (changed) {
+        changed = false;
+        // group records by QI tuple
+        std::map<std::tuple<std::string,std::string,std::string,std::string>, std::vector<int>> groups;
+        for (size_t i = 0; i < ds.records.size(); ++i) {
+            auto key = get_qi(ds.records[i], ageL, eduL, marL, raceL);
+            groups[key].push_back(static_cast<int>(i));
+        }
+
+        // check groups: any group failing must be generalized; use strictest k among members
+        bool needGeneralize = false;
+        for (auto &p : groups) {
+            auto &idxs = p.second;
+            int strict_k = 1;
+            for (int idx : idxs) strict_k = std::max(strict_k, ds.records[idx].k);
+            if (static_cast<int>(idxs.size()) < strict_k) { needGeneralize = true; break; }
+        }
+
+        if (!needGeneralize) break; // done
+
+        // Choose attribute to generalize: pick attribute with largest number of distinct values currently
+        std::set<std::string> ageVals, eduVals, marVals, raceVals;
+        for (const auto &rec : ds.records) {
+            ageVals.insert(generalize_age(rec.age, ageL));
+            eduVals.insert(get_level(EDU_HIER, rec.edu, eduL));
+            marVals.insert(get_level(MARITAL_HIER, rec.marriage, marL));
+            raceVals.insert(get_level(RACE_HIER, rec.race, raceL));
+        }
+
+        // compute sizes
+        int aN = static_cast<int>(ageVals.size());
+        int eN = static_cast<int>(eduVals.size());
+        int mN = static_cast<int>(marVals.size());
+        int rN = static_cast<int>(raceVals.size());
+
+        // pick attribute with max distinct
+        if (ageL < maxLevel && aN >= eN && aN >= mN && aN >= rN) { ageL++; changed = true; }
+        else if (eduL < maxLevel && eN >= aN && eN >= mN && eN >= rN) { eduL++; changed = true; }
+        else if (marL < maxLevel && mN >= aN && mN >= eN && mN >= rN) { marL++; changed = true; }
+        else if (raceL < maxLevel && rN >= aN && rN >= eN && rN >= mN) { raceL++; changed = true; }
+        else {
+            // all at maxLevel or no progress possible
+            break;
+        }
+    }
+
+    // after generalization, we could write out the generalized quasi-identifiers per record or modify records
+    // For now, print summary
+    std::cout << "Anonymization finished with levels: age=" << ageL << " edu=" << eduL << " mar=" << marL << " race=" << raceL << std::endl;
+    return std::make_tuple(ageL, eduL, marL, raceL);
 }
 
 Record::Record(int a, int k_anon, education e, marital_status m, races r) {
@@ -176,22 +259,22 @@ std::string to_string(races r) {
 
 // --- Generalization hierarchies (programmatic maps) ---
 std::map<education, std::vector<std::string>> EDU_HIER = {
-    {bachelors, {"Bachelors", "Undergraduate", "Tertiary", "*"}},
-    {some_college, {"Some-college", "Undergraduate", "Tertiary", "*"}},
-    {eleventh, {"11th", "Secondary", "Primary/Secondary", "*"}},
-    {hs_grad, {"HS-grad", "Secondary", "Primary/Secondary", "*"}},
-    {prof_school, {"Prof-school", "Graduate", "Tertiary", "*"}},
-    {assoc_acdm, {"Assoc-acdm", "Undergraduate", "Tertiary", "*"}},
-    {assoc_voc, {"Assoc-voc", "Undergraduate", "Tertiary", "*"}},
-    {ninth, {"9th", "Primary/Secondary", "Primary/Secondary", "*"}},
-    {seventh_eighth, {"7th-8th", "Primary/Secondary", "Primary/Secondary", "*"}},
-    {twelveth, {"12th", "Secondary", "Primary/Secondary", "*"}},
-    {masters, {"Masters", "Graduate", "Tertiary", "*"}},
-    {first_fourth, {"1st-4th", "Primary", "Primary/Secondary", "*"}},
-    {tenth, {"10th", "Primary/Secondary", "Primary/Secondary", "*"}},
-    {doctorate, {"Doctorate", "Graduate", "Tertiary", "*"}},
-    {fifth_sixth, {"5th-6th", "Primary", "Primary/Secondary", "*"}},
-    {preschool, {"Preschool", "Primary", "Primary/Secondary", "*"}},
+    {bachelors, {"Bachelors", "College", "*"}},
+    {some_college, {"Some-college", "College", "*"}},
+    {eleventh, {"11th", "Highschool", "*"}},
+    {hs_grad, {"HS-grad", "Highschool", "*"}},
+    {prof_school, {"Prof-school", "Professional", "*"}},
+    {assoc_acdm, {"Assoc-acdm", "Professional", "*"}},
+    {assoc_voc, {"Assoc-voc", "Professional", "*"}},
+    {ninth, {"9th", "Highschool", "*"}},
+    {seventh_eighth, {"7th-8th", "Primary", "*"}},
+    {twelveth, {"12th", "Highschool", "*"}},
+    {masters, {"Masters", "College", "*"}},
+    {first_fourth, {"1st-4th", "Primary", "*"}},
+    {tenth, {"10th", "Highschool", "*"}},
+    {doctorate, {"Doctorate", "College", "*"}},
+    {fifth_sixth, {"5th-6th", "Primary", "*"}},
+    {preschool, {"Preschool", "Primary", "*"}},
     {null_edu, {"Unknown", "Unknown", "Unknown", "*"}}
 };
 
@@ -207,11 +290,11 @@ std::map<marital_status, std::vector<std::string>> MARITAL_HIER = {
 };
 
 std::map<races, std::vector<std::string>> RACE_HIER = {
-    {white, {"White", "White/Non-White", "Broad", "*"}},
-    {asian_pac_islander, {"Asian-Pac-Islander", "Non-White", "Broad", "*"}},
-    {amer_indian_eskimo, {"Amer-Indian-Eskimo", "Non-White", "Broad", "*"}},
-    {other, {"Other", "Non-White", "Broad", "*"}},
-    {black, {"Black", "Non-White", "Broad", "*"}},
+    {white, {"White", "*"}},
+    {asian_pac_islander, {"Asian-Pac-Islander", "*"}},
+    {amer_indian_eskimo, {"Amer-Indian-Eskimo", "*"}},
+    {other, {"Other", "*"}},
+    {black, {"Black", "*"}},
     {null_r, {"Unknown", "Unknown", "Unknown", "*"}}
 };
 
