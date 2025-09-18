@@ -85,6 +85,7 @@ class Dataset {
 std::tuple<int,int,int,int> personalized_anonymize(Dataset &ds, int maxLevel = 3);
 
 // helper get_qi is implemented in the cpp
+std::tuple<std::string,std::string,std::string,std::string> get_qi(const Record &r, int ageL, int eduL, int marL, int raceL);
 
 // Note: templated helper `get_level` is defined in the implementation file.
 // Templates must be visible at instantiation; to keep changes minimal we

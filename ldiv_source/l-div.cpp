@@ -9,6 +9,11 @@
 #include <cstdlib>
 #include <set>
 #include <tuple>
+#include <vector>
+#include <limits>
+#include <queue>
+#include <vector>
+#include <limits>
 
 int from_l_div() {
     std::cout << "Function from_l_div called." << std::endl;
@@ -26,7 +31,7 @@ static std::string get_level(const MapT &map, Enum key, int level) {
     return vec[level];
 }
 
-static std::tuple<std::string, std::string, std::string, std::string>
+std::tuple<std::string, std::string, std::string, std::string>
 get_qi(const Record &r, int ageL, int eduL, int marL, int raceL) {
     return std::make_tuple(
         generalize_age(r.age, ageL),
@@ -40,60 +45,96 @@ get_qi(const Record &r, int ageL, int eduL, int marL, int raceL) {
 std::tuple<int,int,int,int> personalized_anonymize(Dataset &ds, int maxLevel) {
     if (ds.records.empty()) return std::make_tuple(0,0,0,0);
 
-    // starting levels
-    int ageL = 0, eduL = 0, marL = 0, raceL = 0;
+    // We'll perform a BFS over the space of level combinations, starting from (0,0,0,0).
+    // This preserves a while-loop structure and ensures we attempt all combos before giving up.
+        // Determine per-attribute maximum valid levels so we never explore invalid generalization levels.
+        // Age: generalize_age() returns '*' for level > 3, so allow levels 0..4 (inclusive) where 4 means '*'.
+        int max_age_level = 4;
+        // For categorical hierarchies, allow levels 0..(depth-1) for actual levels; we'll allow an extra level equal
+        // to the depth to force the last entry (which should be '*'). So valid indices are 0..depth (inclusive).
+        int max_edu_level = 2;
+        int max_mar_level = 2;
+        int max_race_level = 1;
 
-    bool changed = true;
-    while (changed) {
-        changed = false;
-        // group records by QI tuple
+    std::queue<std::tuple<int,int,int,int>> q;
+    std::set<std::tuple<int,int,int,int>> tried;
+    q.emplace(0,0,0,0);
+
+    int iteration = 0;
+    long long best_deficit = std::numeric_limits<long long>::max();
+    std::tuple<int,int,int,int> best_combo = std::make_tuple(maxLevel, maxLevel, maxLevel, maxLevel);
+    int best_sum = std::numeric_limits<int>::max();
+
+    while (!q.empty()) {
+        auto cmb = q.front(); q.pop();
+        if (tried.count(cmb)) continue;
+        tried.insert(cmb);
+
+        int aL = std::get<0>(cmb);
+        int eL = std::get<1>(cmb);
+        int mL = std::get<2>(cmb);
+        int rL = std::get<3>(cmb);
+
+        iteration++;
+        std::cout << "Iteration " << iteration << ": Generalized to levels age=" << aL
+                  << " edu=" << eL << " mar=" << mL << " race=" << rL << std::endl;
+
+        // Build groups and compute total deficit for this combo
         std::map<std::tuple<std::string,std::string,std::string,std::string>, std::vector<int>> groups;
         for (size_t i = 0; i < ds.records.size(); ++i) {
-            auto key = get_qi(ds.records[i], ageL, eduL, marL, raceL);
+            auto key = get_qi(ds.records[i], aL, eL, mL, rL);
             groups[key].push_back(static_cast<int>(i));
         }
 
-        // check groups: any group failing must be generalized; use strictest k among members
-        bool needGeneralize = false;
+        long long total_deficit = 0;
         for (auto &p : groups) {
             auto &idxs = p.second;
             int strict_k = 1;
             for (int idx : idxs) strict_k = std::max(strict_k, ds.records[idx].k);
-            if (static_cast<int>(idxs.size()) < strict_k) { needGeneralize = true; break; }
+            if ((int)idxs.size() < strict_k) total_deficit += (strict_k - (int)idxs.size());
         }
 
-        if (!needGeneralize) break; // done
-
-        // Choose attribute to generalize: pick attribute with largest number of distinct values currently
-        std::set<std::string> ageVals, eduVals, marVals, raceVals;
-        for (const auto &rec : ds.records) {
-            ageVals.insert(generalize_age(rec.age, ageL));
-            eduVals.insert(get_level(EDU_HIER, rec.edu, eduL));
-            marVals.insert(get_level(MARITAL_HIER, rec.marriage, marL));
-            raceVals.insert(get_level(RACE_HIER, rec.race, raceL));
+        if (total_deficit == 0) {
+            std::cout << "Anonymization satisfied at levels: age=" << aL << " edu=" << eL << " mar=" << mL << " race=" << rL << std::endl;
+            return cmb;
         }
 
-        // compute sizes
-        int aN = static_cast<int>(ageVals.size());
-        int eN = static_cast<int>(eduVals.size());
-        int mN = static_cast<int>(marVals.size());
-        int rN = static_cast<int>(raceVals.size());
-
-        // pick attribute with max distinct
-        if (ageL < maxLevel && aN >= eN && aN >= mN && aN >= rN) { ageL++; changed = true; }
-        else if (eduL < maxLevel && eN >= aN && eN >= mN && eN >= rN) { eduL++; changed = true; }
-        else if (marL < maxLevel && mN >= aN && mN >= eN && mN >= rN) { marL++; changed = true; }
-        else if (raceL < maxLevel && rN >= aN && rN >= eN && rN >= mN) { raceL++; changed = true; }
-        else {
-            // all at maxLevel or no progress possible
-            break;
+        // record best-effort
+        int s = aL + eL + mL + rL;
+        if (total_deficit < best_deficit || (total_deficit == best_deficit && s < best_sum)) {
+            best_deficit = total_deficit;
+            best_combo = cmb;
+            best_sum = s;
         }
+
+            // enqueue neighbors: increase any single attribute by 1 (if within per-attribute limits and the requested maxLevel)
+            int effective_max_age = std::min(maxLevel, max_age_level);
+            int effective_max_edu = std::min(maxLevel, max_edu_level);
+            int effective_max_mar = std::min(maxLevel, max_mar_level);
+            int effective_max_race = std::min(maxLevel, max_race_level);
+
+            if (aL < effective_max_age) q.emplace(aL+1, eL, mL, rL);
+            if (eL < effective_max_edu) q.emplace(aL, eL+1, mL, rL);
+            if (mL < effective_max_mar) q.emplace(aL, eL, mL+1, rL);
+            if (rL < effective_max_race) q.emplace(aL, eL, mL, rL+1);
     }
 
-    // after generalization, we could write out the generalized quasi-identifiers per record or modify records
-    // For now, print summary
-    std::cout << "Anonymization finished with levels: age=" << ageL << " edu=" << eduL << " mar=" << marL << " race=" << raceL << std::endl;
-    return std::make_tuple(ageL, eduL, marL, raceL);
+    // Exhausted all combos: per request, generalize everything to '*' in the worst case.
+    // For categorical hierarchies we can pick a level >= the largest hierarchy depth so get_level() will return the last element (which is '*').
+    // For age, generalize_age() only returns '*' for level > 3, so pick 4 to force '*'.
+    std::cout << "No full anonymization possible within limits; generalizing everything to max (all '*')." << std::endl;
+
+        // compute the full-generalization levels consistent with per-attribute depths
+        int maxEduDepth = max_edu_level;
+        int maxMarDepth = max_mar_level;
+        int maxRaceDepth = max_race_level;
+
+        int full_age_level = max_age_level; // level 4 maps to '*'
+        int full_edu_level = maxEduDepth;
+        int full_mar_level = maxMarDepth;
+        int full_race_level = maxRaceDepth;
+
+        return std::make_tuple(full_age_level, full_edu_level, full_mar_level, full_race_level);
 }
 
 Record::Record(int a, int k_anon, education e, marital_status m, races r) {
