@@ -30,9 +30,7 @@ int main(int argc, char **argv) {
 
     std::cout << "Equivalence classes: " << counts.size() << "\n";
     // print a few sample class sizes
-    int printed = 0;
     for (const auto &p : counts) {
-        if (printed++ >= 10) break;
         const auto &k = p.first;
         std::cout << "Class key: (" << std::get<0>(k) << ", " << std::get<1>(k)
                   << ", " << std::get<2>(k) << ", " << std::get<3>(k) << ") -> size=" << p.second << std::endl;

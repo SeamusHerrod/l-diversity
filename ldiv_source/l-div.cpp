@@ -97,6 +97,20 @@ std::tuple<int,int,int,int> personalized_anonymize(Dataset &ds, int maxLevel) {
         if (total_deficit == 0) {
             std::cout << "Anonymization satisfied at levels: age=" << aL << " edu=" << eL << " mar=" << mL << " race=" << rL << std::endl;
             return cmb;
+        } 
+        //else, print the failed equivalence classes
+        else {
+            std::cout << "Total deficit (records needed to satisfy k-anonymity): " << total_deficit << std::endl;
+            for (auto &p : groups) {
+                auto &idxs = p.second;
+                int strict_k = 1;
+                for (int idx : idxs) strict_k = std::max(strict_k, ds.records[idx].k);
+                if ((int)idxs.size() < strict_k) {
+                    std::cout << "  Class key: (" << std::get<0>(p.first) << ", " << std::get<1>(p.first)
+                              << ", " << std::get<2>(p.first) << ", " << std::get<3>(p.first)
+                              << ") size=" << idxs.size() << " needs " << (strict_k - (int)idxs.size()) << " more to reach k=" << strict_k << std::endl;
+                }
+            }
         }
 
         // record best-effort
@@ -136,6 +150,9 @@ std::tuple<int,int,int,int> personalized_anonymize(Dataset &ds, int maxLevel) {
 
         return std::make_tuple(full_age_level, full_edu_level, full_mar_level, full_race_level);
 }
+
+// calculate distortion (average per-attribute level)
+
 
 Record::Record(int a, int k_anon, education e, marital_status m, races r) {
     age = a;
@@ -206,7 +223,8 @@ static races parseRace(const std::string &raw) {
 
 // generate a random value of 4, 5, or 7
 int assign_rand_k() {
-    int k_vals[] = {4, 5, 7};
+    //int k_vals[] = {4, 5, 7};
+    int k_vals[] = {2, 3, 4};
     int idx = rand() % 3;
     return k_vals[idx];
 }

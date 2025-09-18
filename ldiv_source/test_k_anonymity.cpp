@@ -38,7 +38,7 @@ int main() {
     // Load full dataset from file and copy first 50 records for the test
     Dataset full; // uses FILEPATH / data/adult.data
     TmpDataset ds;
-    size_t want = 50;
+    size_t want = 1000;
     for (size_t i = 0; i < full.records.size() && ds.records.size() < want; ++i) {
         const auto &r = full.records[i];
         ds.add(r.age, r.k, r.edu, r.marriage, r.race);
@@ -57,6 +57,8 @@ int main() {
 
     // Print each equivalence class and its members with raw and generalized values
     std::cout << "Equivalence classes at levels age=" << aL << " edu=" << eL << " mar=" << mL << " race=" << rL << "\n";
+    // output number of equivalence classes
+    std::cout << "Total equivalence classes: " << groups.size() << "\n";
     for (auto &p : groups) {
         const auto &key = p.first;
         const auto &members = p.second;
