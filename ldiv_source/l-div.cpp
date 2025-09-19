@@ -49,12 +49,12 @@ std::tuple<int,int,int,int> personalized_anonymize(Dataset &ds, int maxLevel) {
     // This preserves a while-loop structure and ensures we attempt all combos before giving up.
         // Determine per-attribute maximum valid levels so we never explore invalid generalization levels.
         // Age: generalize_age() returns '*' for level > 3, so allow levels 0..4 (inclusive) where 4 means '*'.
-        int max_age_level = 4;
+        int max_age_level = MAX_AGE_LEVEL;
         // For categorical hierarchies, allow levels 0..(depth-1) for actual levels; we'll allow an extra level equal
         // to the depth to force the last entry (which should be '*'). So valid indices are 0..depth (inclusive).
-        int max_edu_level = 2;
-        int max_mar_level = 2;
-        int max_race_level = 1;
+        int max_edu_level = MAX_EDU_LEVEL;
+        int max_mar_level = MAX_MAR_LEVEL;
+        int max_race_level = MAX_RACE_LEVEL;
 
     std::queue<std::tuple<int,int,int,int>> q;
     std::set<std::tuple<int,int,int,int>> tried;
@@ -151,8 +151,15 @@ std::tuple<int,int,int,int> personalized_anonymize(Dataset &ds, int maxLevel) {
         return std::make_tuple(full_age_level, full_edu_level, full_mar_level, full_race_level);
 }
 
-// calculate distortion (average per-attribute level)
-
+// calculate distortion 
+float calculate_distortion(int ageL, int eduL, int marL, int raceL) {
+    // Using the predefined maximum levels for each attribute
+    float age_dist = static_cast<float>(ageL) / MAX_AGE_LEVEL;
+    float edu_dist = static_cast<float>(eduL) / MAX_EDU_LEVEL;
+    float mar_dist = static_cast<float>(marL) / MAX_MAR_LEVEL;
+    float race_dist = static_cast<float>(raceL) / MAX_RACE_LEVEL;
+    return ((age_dist + edu_dist + mar_dist + race_dist) / 4.0f);
+}
 
 Record::Record(int a, int k_anon, education e, marital_status m, races r) {
     age = a;
@@ -222,9 +229,8 @@ static races parseRace(const std::string &raw) {
 }
 
 // generate a random value of 4, 5, or 7
-int assign_rand_k() {
-    //int k_vals[] = {4, 5, 7};
-    int k_vals[] = {2, 3, 4};
+int assign_rand_k(int k1, int k2, int k3) {
+    int k_vals[] = {k1, k2, k3};
     int idx = rand() % 3;
     return k_vals[idx];
 }
@@ -249,7 +255,7 @@ Dataset::Dataset() {
         if (fields.size() < 9) continue;
 
         float age = 0.0f;
-        int k = assign_rand_k();
+        int k = assign_rand_k(K1, K2, K3); // assign random k from given options
         if (k == 4) {
             k_counts[0]++;
         } else if (k == 5) {

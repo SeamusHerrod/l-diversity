@@ -8,6 +8,13 @@
 #include <map>
 int from_l_div();
 static std::string FILEPATH = "../data/adult.data";
+static int MAX_AGE_LEVEL = 4; // 0..4 (4 means '*')
+static int MAX_EDU_LEVEL = 2; // 0..2 (2 means '*')
+static int MAX_MAR_LEVEL = 2; // 0..2 (2 means '*')
+static int MAX_RACE_LEVEL = 1; // 0..1 (1 means '*')
+static int K1 = 2;
+static int K2 = 3;
+static int K3 = 4;
 using namespace std;
 
 // Enumerations used by Record
@@ -60,7 +67,7 @@ extern std::map<races, std::vector<std::string>> RACE_HIER;
 
 // age generalizer: returns string for given level (0=exact, higher=more general)
 std::string generalize_age(int age, int level);
-int assign_rand_k();
+int assign_rand_k(int k1, int k2, int k3); // assign random k from given options
 
 class Record {
     public:
@@ -86,6 +93,16 @@ std::tuple<int,int,int,int> personalized_anonymize(Dataset &ds, int maxLevel = 3
 
 // helper get_qi is implemented in the cpp
 std::tuple<std::string,std::string,std::string,std::string> get_qi(const Record &r, int ageL, int eduL, int marL, int raceL);
+
+/*
+    calculate distortion:
+        Distortion Algorithm:
+            Distortion, D = 
+                \Sigma_atr-i (current level of generalization for attribut i / max level of generalization for attribute i) / N_attr
+        Input: current level of generalization for each attribute
+        Output: distortion value D
+*/
+float calculate_distortion(int ageL, int eduL, int marL, int raceL);
 
 // Note: templated helper `get_level` is defined in the implementation file.
 // Templates must be visible at instantiation; to keep changes minimal we

@@ -3,6 +3,8 @@
 #include <tuple>
 #include "l-div.h"
 
+
+
 int main(int argc, char **argv) {
     Dataset dataset; // reads entire data/adult.data (or data/adult.data fallback)
     if (dataset.records.empty()) {
@@ -35,6 +37,29 @@ int main(int argc, char **argv) {
         std::cout << "Class key: (" << std::get<0>(k) << ", " << std::get<1>(k)
                   << ", " << std::get<2>(k) << ", " << std::get<3>(k) << ") -> size=" << p.second << std::endl;
     }
+    // calculate distortion:
+    calculate_distortion(aL, eL, mL, rL);
+    std::cout << "Distortion D = " << calculate_distortion(aL, eL, mL, rL) << std::endl;
+
+    // print members of each equivalence class:
+    /*
+    std::cout << "---------------------------------\n" << "Members of each equivalence class:\n" << "---------------------------------\n";
+    for (const auto &p : counts) {
+        const auto &k = p.first;
+        std::cout << "Class key: (" << std::get<0>(k) << ", " << std::get<1>(k)
+                  << ", " << std::get<2>(k) << ", " << std::get<3>(k) << ") -> size=" << p.second << std::endl;
+        for (size_t i = 0; i < dataset.records.size(); ++i) {
+            auto key = get_qi(dataset.records[i], aL, eL, mL, rL);
+            if (key == k) {
+                const auto &rec = dataset.records[i];
+                std::cout << "  idx=" << i << " raw(age=" << rec.age << ", edu=" << to_string(rec.edu)
+                          << ", mar=" << to_string(rec.marriage) << "," << "race=" << to_string(rec.race)
+                            << ") k=" << rec.k << " generalized=(" << std::get<0>(key) << ", "
+                          << std::get<1>(key) << ", " << std::get<2>(key) << ", " << std::get<3>(key) << ")\n";
+            }
+        }
+    }
+    */
 
     return 0;
 }
