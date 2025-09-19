@@ -9,6 +9,9 @@ ldiv: main.o l-div.o
 test: test_k_anonymity.o l-div.o
 	$(CXX) $(CXXFLAGS) -o test_k_anonymity test_k_anonymity.o l-div.o
 
+test_l_diversity: test_k_l_diversity.o l-div.o
+	$(CXX) $(CXXFLAGS) -o test_k_l_diversity test_k_l_diversity.o l-div.o
+
 main.o: main.cpp l-div.h
 	$(CXX) $(CXXFLAGS) -c main.cpp
 
@@ -17,6 +20,9 @@ l-div.o: l-div.cpp l-div.h
 
 test_k_anonymity.o: test_k_anonymity.cpp l-div.h
 	$(CXX) $(CXXFLAGS) -c test_k_anonymity.cpp
+
+test_k_l_diversity.o: test_k_l_diversity.cpp l-div.h
+	$(CXX) $(CXXFLAGS) -c test_k_l_diversity.cpp
 
 clean:
 	rm -f *.o ldiv

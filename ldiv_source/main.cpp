@@ -41,6 +41,17 @@ int main(int argc, char **argv) {
     calculate_distortion(aL, eL, mL, rL);
     std::cout << "Distortion D = " << calculate_distortion(aL, eL, mL, rL) << std::endl;
 
+    // Now attempt to achieve uniform k-anonymity (k=6) + 3-diversity on occupation using
+    // global generalization + suppression. This will return chosen levels and suppressed count.
+    auto result = achieve_k_and_l_diversity(dataset, 6, 3, maxLevel);
+    int ak = std::get<0>(result);
+    int ae = std::get<1>(result);
+    int am = std::get<2>(result);
+    int ar = std::get<3>(result);
+    int suppressed = std::get<4>(result);
+    float distortion = std::get<5>(result);
+    std::cout << "achieve_k_and_l_diversity result: age=" << ak << " edu=" << ae << " mar=" << am << " race=" << ar << " suppressed=" << suppressed << " distortion=" << distortion << std::endl;
+
     // print members of each equivalence class:
     /*
     std::cout << "---------------------------------\n" << "Members of each equivalence class:\n" << "---------------------------------\n";

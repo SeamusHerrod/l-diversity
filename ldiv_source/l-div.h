@@ -7,15 +7,6 @@
 #include <string>
 #include <map>
 int from_l_div();
-static std::string FILEPATH = "../data/adult.data";
-static int MAX_AGE_LEVEL = 4; // 0..4 (4 means '*')
-static int MAX_EDU_LEVEL = 2; // 0..2 (2 means '*')
-static int MAX_MAR_LEVEL = 2; // 0..2 (2 means '*')
-static int MAX_RACE_LEVEL = 1; // 0..1 (1 means '*')
-static int NUM_ATTR = 4;
-static int K1 = 4;
-static int K2 = 5;
-static int K3 = 7;
 using namespace std;
 
 // Enumerations used by Record
@@ -56,11 +47,29 @@ enum races {
     black, 
     null_r
 };
+enum occupations {
+    Tech_support,
+    Craft_repair,
+    Other_service,
+    Sales,
+    Exec_managerial,
+    Prof_specialty,
+    Handlers_cleaners,
+    Machine_op_inspct,
+    Adm_clerical,
+    Farming_fishing,
+    Transport_moving,
+    Priv_house_serv,
+    Protective_serv,
+    Armed_Forces,
+    null_occ
+};
 
 // helpers
 std::string to_string(education e);
 std::string to_string(marital_status m);
 std::string to_string(races r);
+std::string to_string(occupations o);
 // generalization maps: map from enum to vector of string levels (level 0..N)
 extern std::map<education, std::vector<std::string>> EDU_HIER;
 extern std::map<marital_status, std::vector<std::string>> MARITAL_HIER;
@@ -77,7 +86,8 @@ class Record {
         education edu;
         marital_status marriage;
         races race;
-        Record(int a, int k_anon, education e, marital_status m, races r);
+        occupations occ;
+        Record(int a, int k_anon, education e, marital_status m, races r, occupations o);
 };
 
 class Dataset {
@@ -91,6 +101,13 @@ class Dataset {
 // has size >= max k required among its members.
 // Returns final levels as tuple: (ageL, eduL, marL, raceL)
 std::tuple<int,int,int,int> personalized_anonymize(Dataset &ds, int maxLevel = 3);
+
+// Achieve uniform k-anonymity (default k=6) together with t-diversity (default t=3) on the sensitive
+// attribute `occupation` using global generalization plus suppression. The function searches over
+// generalization level combinations and returns a tuple: (ageL, eduL, marL, raceL, suppressed_count).
+// suppressed_count is the number of records that must be suppressed (removed) under that combination
+// to ensure every remaining equivalence class has size >= k and at least `diversity` distinct occupations.
+std::tuple<int,int,int,int,int,float> achieve_k_and_l_diversity(Dataset &ds, int k = 6, int diversity = 3, int maxLevel = 3);
 
 // helper get_qi is implemented in the cpp
 std::tuple<std::string,std::string,std::string,std::string> get_qi(const Record &r, int ageL, int eduL, int marL, int raceL);
