@@ -12,9 +12,10 @@ static int MAX_AGE_LEVEL = 4; // 0..4 (4 means '*')
 static int MAX_EDU_LEVEL = 2; // 0..2 (2 means '*')
 static int MAX_MAR_LEVEL = 2; // 0..2 (2 means '*')
 static int MAX_RACE_LEVEL = 1; // 0..1 (1 means '*')
-static int K1 = 2;
-static int K2 = 3;
-static int K3 = 4;
+static int NUM_ATTR = 4;
+static int K1 = 4;
+static int K2 = 5;
+static int K3 = 7;
 using namespace std;
 
 // Enumerations used by Record

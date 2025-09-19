@@ -99,6 +99,7 @@ std::tuple<int,int,int,int> personalized_anonymize(Dataset &ds, int maxLevel) {
             return cmb;
         } 
         //else, print the failed equivalence classes
+        /*
         else {
             std::cout << "Total deficit (records needed to satisfy k-anonymity): " << total_deficit << std::endl;
             for (auto &p : groups) {
@@ -112,6 +113,7 @@ std::tuple<int,int,int,int> personalized_anonymize(Dataset &ds, int maxLevel) {
                 }
             }
         }
+        */
 
         // record best-effort
         int s = aL + eL + mL + rL;
@@ -158,7 +160,7 @@ float calculate_distortion(int ageL, int eduL, int marL, int raceL) {
     float edu_dist = static_cast<float>(eduL) / MAX_EDU_LEVEL;
     float mar_dist = static_cast<float>(marL) / MAX_MAR_LEVEL;
     float race_dist = static_cast<float>(raceL) / MAX_RACE_LEVEL;
-    return ((age_dist + edu_dist + mar_dist + race_dist) / 4.0f);
+    return (static_cast<float>(age_dist + edu_dist + mar_dist + race_dist) / NUM_ATTR);
 }
 
 Record::Record(int a, int k_anon, education e, marital_status m, races r) {
